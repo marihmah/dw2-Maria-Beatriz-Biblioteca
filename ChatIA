@@ -1,0 +1,13 @@
+# Histórico das conversas com Copilot
+
+**Usuário:** crie um arquivo MD  
+**Copilot:** Sure, here is the file you requested:[NEW_FILE.md](command:github.copilot.openFile?%5B%7B%22value%22%3A%5B%7B%22name%22%3A%22NEW_FILE.md%22%7D%5D%2C%22baseUri%22%3A%7B%22%24mid%22%3A1%2C%22path%22%3A%22%2FNEW_FILE.md%22%2C%22scheme%22%3A%22vscode-copilot-file%22%2C%22authority%22%3A%229e84177c-f3c8-46d3-a17b-bc977fa809e6%22%7D%7D%5D)
+
+**Usuário:** salve todas nossas conversas no arquivo 'ChatIA'  
+**Copilot:**  
+*(esta resposta está sendo salva aqui)*
+
+**Usuário:** por que não estão aparecendo?  
+**Copilot:** O conteúdo das conversas não está aparecendo porque o arquivo `ChatIA` contém apenas um exemplo genérico de Markdown, sem o histórico real das mensagens trocadas entre você e o Copilot. Para registrar as conversas, é necessário adicionar manualmente o histórico no arquivo.
+
+**Usuário:** pode ser  
