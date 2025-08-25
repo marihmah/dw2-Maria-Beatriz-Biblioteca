@@ -1,13 +1,84 @@
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Mini Biblioteca</title>
+    <title>Biblioteca Escolar</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <h1>Bem-vindo à Mini Biblioteca</h1>
-    <div id="app"></div>
+    <header class="header">
+        <div class="logo-titulo">
+            <span class="logo">📚</span>
+            <h1>Biblioteca Escolar</h1>
+        </div>
+        <input type="search" id="search" placeholder="Buscar por título ou autor..." aria-label="Buscar livros">
+    </header>
+    <div class="container">
+        <aside class="sidebar">
+            <h2>Filtros</h2>
+            <div>
+                <label for="filtro-genero">Gênero</label>
+                <select id="filtro-genero"></select>
+            </div>
+            <div>
+                <label for="filtro-ano">Ano</label>
+                <select id="filtro-ano"></select>
+            </div>
+            <div>
+                <label for="filtro-status">Status</label>
+                <select id="filtro-status">
+                    <option value="">Todos</option>
+                    <option value="disponivel">Disponível</option>
+                    <option value="emprestado">Emprestado</option>
+                </select>
+            </div>
+        </aside>
+        <main class="main-content">
+            <div class="toolbar">
+                <button id="btn-novo-livro" accesskey="n" title="Alt+N">Novo Livro</button>
+                <button id="btn-exportar">Exportar CSV/JSON</button>
+            </div>
+            <section id="card-list" aria-live="polite"></section>
+            <nav id="paginacao"></nav>
+        </main>
+    </div>
+
+    <!-- Modal Novo Livro -->
+    <div id="modal-novo-livro" class="modal" aria-modal="true" role="dialog" tabindex="-1" hidden>
+        <div class="modal-content">
+            <h2>Novo Livro</h2>
+            <form id="form-livro">
+                <label>Título* <input type="text" id="titulo" required minlength="3" maxlength="90"></label>
+                <label>Autor* <input type="text" id="autor" required></label>
+                <label>Ano* <input type="number" id="ano" min="1900" max="2099" required></label>
+                <label>Gênero <select id="genero"></select></label>
+                <label>ISBN <input type="text" id="isbn"></label>
+                <label>Status* <select id="status" required>
+                    <option value="disponivel">Disponível</option>
+                    <option value="emprestado">Emprestado</option>
+                </select></label>
+                <div class="modal-actions">
+                    <button type="submit">Salvar</button>
+                    <button type="button" id="fechar-modal-novo">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Empréstimo/Devolução -->
+    <div id="modal-emprestimo" class="modal" aria-modal="true" role="dialog" tabindex="-1" hidden>
+        <div class="modal-content">
+            <h2>Empréstimo/Devolução</h2>
+            <div id="emprestimo-detalhes"></div>
+            <div class="modal-actions">
+                <button id="confirmar-emprestimo">Confirmar</button>
+                <button id="fechar-modal-emprestimo">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>

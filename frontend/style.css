@@ -1,18 +1,238 @@
+
 body {
-    font-family: Arial, sans-serif;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    font-family: 'Inter', 'Roboto', Arial, sans-serif;
     margin: 0;
     padding: 0;
+    background: #F8FAFC;
+    color: #0F172A;
     min-height: 100vh;
-    background: #f5f5f5;
 }
-#app {
+
+.header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: #1E3A8A;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 2rem;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(30,58,138,0.08);
+}
+.logo-titulo {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.logo {
+    font-size: 2rem;
+}
+.header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+}
+.header input[type="search"] {
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    border: none;
+    font-size: 1rem;
+    width: 260px;
+    color: #0F172A;
+}
+
+.container {
+    display: flex;
+    margin-top: 4.5rem;
+    min-height: calc(100vh - 4.5rem);
+}
+
+.sidebar {
+    background: #fff;
+    border-right: 1px solid #e5e7eb;
+    padding: 2rem 1rem;
+    width: 220px;
+    min-width: 180px;
+    box-shadow: 2px 0 8px rgba(30,58,138,0.03);
+}
+.sidebar h2 {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    color: #1E3A8A;
+}
+.sidebar label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+.sidebar select {
+    width: 100%;
+    margin-bottom: 1.2rem;
+    padding: 0.4rem;
+    border-radius: 4px;
+    border: 1px solid #e5e7eb;
+}
+
+.main-content {
+    flex: 1;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+.toolbar {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+.toolbar button {
+    background: #10B981;
+    color: #fff;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.toolbar button:hover {
+    background: #059669;
+}
+
+#card-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+}
+.card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(30,58,138,0.06);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    border-left: 6px solid #F59E0B;
+}
+.card .titulo {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1E3A8A;
+}
+.card .autor {
+    color: #0F172A;
+    font-size: 0.98rem;
+}
+.card .ano, .card .genero, .card .status {
+    font-size: 0.95rem;
+    color: #475569;
+}
+.card .status[data-status="disponivel"] {
+    color: #10B981;
+    font-weight: 600;
+}
+.card .status[data-status="emprestado"] {
+    color: #F59E0B;
+    font-weight: 600;
+}
+
+/* Modal */
+.modal {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(15,23,42,0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+}
+.modal[hidden] {
+    display: none;
+}
+.modal-content {
+    background: #fff;
+    border-radius: 8px;
+    padding: 2rem;
+    min-width: 320px;
+    max-width: 95vw;
+    box-shadow: 0 4px 24px rgba(30,58,138,0.12);
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    width: 100%;
-    max-width: 600px;
-    margin-top: 2rem;
+}
+.modal-content h2 {
+    color: #1E3A8A;
+    margin-top: 0;
+}
+.modal-content label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    margin-bottom: 0.7rem;
+}
+.modal-content input, .modal-content select {
+    padding: 0.4rem;
+    border-radius: 4px;
+    border: 1px solid #e5e7eb;
+    font-size: 1rem;
+}
+.modal-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+.modal-actions button {
+    background: #1E3A8A;
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1.2rem;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.modal-actions button:hover {
+    background: #0F172A;
+}
+
+#paginacao {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-top: 1.5rem;
+}
+#paginacao button {
+    background: #F59E0B;
+    color: #fff;
+    border: none;
+    padding: 0.4rem 0.9rem;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+#paginacao button[disabled] {
+    background: #e5e7eb;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+    .container {
+        flex-direction: column;
+    }
+    .sidebar {
+        width: 100%;
+        min-width: unset;
+        border-right: none;
+        border-bottom: 1px solid #e5e7eb;
+        box-shadow: none;
+        padding: 1rem;
+    }
+    .main-content {
+        padding: 1rem;
+    }
 }
