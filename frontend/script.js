@@ -1,10 +1,50 @@
 
-// Estado local
+
+// Estado local e configuração da API
 let livros = [];
 let filtro = { genero: '', ano: '', status: '', texto: '' };
 let ordenacao = { campo: 'titulo', direcao: 'asc' };
 let paginaAtual = 1;
 const ITENS_POR_PAGINA = 10;
+const API_URL = 'http://localhost:8000/livros'; // Ajuste se necessário
+
+// Função utilitária para buscar todos os livros da API
+async function fetchLivros() {
+	const res = await fetch(API_URL);
+	livros = await res.json();
+}
+
+// Função utilitária para criar um novo livro na API
+async function criarLivro(livro) {
+	const res = await fetch(API_URL, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(livro)
+	});
+	return res.ok;
+}
+
+// Função utilitária para editar um livro na API
+async function editarLivro(id, livro) {
+	const res = await fetch(`${API_URL}/${id}`, {
+		method: 'PUT',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(livro)
+	});
+	return res.ok;
+}
+
+// Função utilitária para deletar um livro na API
+async function deletarLivro(id) {
+	const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+	return res.ok;
+}
+
+// Função utilitária para atualizar status de empréstimo/devolução
+async function emprestarOuDevolverLivro(id, acao) {
+	const res = await fetch(`${API_URL}/${id}/${acao}`, { method: 'PATCH' });
+	return res.ok;
+}
 
 // Elementos DOM
 const cardList = document.getElementById('card-list');
@@ -31,7 +71,8 @@ function carregarLocalStorage() {
 	if (o) ordenacao = JSON.parse(o);
 }
 
-// Renderização
+
+// Renderização dos cards de livros
 function renderizarCards() {
 	let filtrados = livros.filter(livro => {
 		const texto = filtro.texto.toLowerCase();
@@ -65,9 +106,11 @@ function renderizarCards() {
 			<div class="titulo">${livro.titulo}</div>
 			<div class="autor">${livro.autor}</div>
 			<div class="ano">Ano: ${livro.ano}</div>
-			<div class="genero">Gênero: ${livro.genero || '-'}</div>
+			<div class="genero">Gênero: ${livro.genero || '-'} </div>
 			<div class="status" data-status="${livro.status}">Status: ${livro.status}</div>
 			<button onclick="abrirModalEmprestimo('${livro.id}')">Empréstimo/Devolução</button>
+			<button onclick="editarLivroModal('${livro.id}')">Editar</button>
+			<button onclick="excluirLivro('${livro.id}')">Excluir</button>
 		</div>
 	`).join('') || '<p>Nenhum livro encontrado.</p>';
 	renderizarPaginacao(total);
@@ -128,8 +171,9 @@ window.addEventListener('keydown', e => {
 	}
 });
 
-// CRUD Livro (exemplo local, depois integrar com API)
-formLivro.addEventListener('submit', e => {
+
+// CRUD Livro (agora integrado com API)
+formLivro.addEventListener('submit', async e => {
 	e.preventDefault();
 	const titulo = document.getElementById('titulo').value.trim();
 	const autor = document.getElementById('autor').value.trim();
@@ -151,15 +195,79 @@ formLivro.addEventListener('submit', e => {
 		return;
 	}
 	const novoLivro = {
-		id: Date.now().toString(),
 		titulo, autor, ano, genero, isbn, status,
 		data_emprestimo: null
 	};
-	livros.push(novoLivro);
-	salvarLocalStorage();
+	await criarLivro(novoLivro); // Chama API
+	await fetchLivros(); // Atualiza lista
 	fecharModalNovoLivro();
 	renderizarCards();
 });
+
+// Função para abrir modal de edição de livro (exemplo simplificado)
+window.editarLivroModal = function(id) {
+	const livro = livros.find(l => l.id == id);
+	if (!livro) return;
+	document.getElementById('titulo').value = livro.titulo;
+	document.getElementById('autor').value = livro.autor;
+	document.getElementById('ano').value = livro.ano;
+	document.getElementById('genero').value = livro.genero;
+	document.getElementById('isbn').value = livro.isbn;
+	document.getElementById('status').value = livro.status;
+	modalNovoLivro.hidden = false;
+	// Ao salvar, chama editarLivro
+	formLivro.onsubmit = async function(e) {
+		e.preventDefault();
+		const editado = {
+			titulo: document.getElementById('titulo').value.trim(),
+			autor: document.getElementById('autor').value.trim(),
+			ano: parseInt(document.getElementById('ano').value),
+			genero: document.getElementById('genero').value,
+			isbn: document.getElementById('isbn').value.trim(),
+			status: document.getElementById('status').value
+		};
+		await editarLivro(id, editado);
+		await fetchLivros();
+		fecharModalNovoLivro();
+		renderizarCards();
+		formLivro.onsubmit = null; // Limpa handler
+	};
+}
+
+// Função para excluir livro
+window.excluirLivro = async function(id) {
+	if (confirm('Tem certeza que deseja excluir este livro?')) {
+		await deletarLivro(id);
+		await fetchLivros();
+		renderizarCards();
+	}
+}
+
+// Modal de empréstimo/devolução
+window.abrirModalEmprestimo = function(id) {
+	const livro = livros.find(l => l.id == id);
+	if (!livro) return;
+	const modal = document.getElementById('modal-emprestimo');
+	const detalhes = document.getElementById('emprestimo-detalhes');
+	detalhes.innerHTML = `<p><b>${livro.titulo}</b> - ${livro.autor}<br>Status: <span data-status="${livro.status}">${livro.status}</span></p>`;
+	modal.hidden = false;
+	// Botão de confirmar
+	document.getElementById('confirmar-emprestimo').onclick = async function() {
+		if (livro.status === 'emprestado') {
+			// Devolução
+			await emprestarOuDevolverLivro(id, 'devolver');
+		} else {
+			// Empréstimo
+			await emprestarOuDevolverLivro(id, 'emprestar');
+		}
+		await fetchLivros();
+		renderizarCards();
+		modal.hidden = true;
+	};
+	document.getElementById('fechar-modal-emprestimo').onclick = function() {
+		modal.hidden = true;
+	};
+}
 
 // Exportar CSV/JSON
 btnExportar.addEventListener('click', () => {
@@ -191,23 +299,26 @@ btnExportar.addEventListener('click', () => {
 	a2.click();
 });
 
-// Inicialização
+
+// Popular filtros de gênero e ano
 function popularFiltros() {
-	// Gêneros e anos fictícios para exemplo
-	const generos = ['Romance', 'Aventura', 'Fantasia', 'Didático', 'Biografia'];
+	const generos = Array.from(new Set(livros.map(l => l.genero))).filter(Boolean);
 	filtroGenero.innerHTML = '<option value="">Todos</option>' + generos.map(g => `<option value="${g}">${g}</option>`).join('');
 	const anos = Array.from(new Set(livros.map(l => l.ano))).sort();
 	filtroAno.innerHTML = '<option value="">Todos</option>' + anos.map(a => `<option value="${a}">${a}</option>`).join('');
 }
 
-function init() {
-	carregarLocalStorage();
+// Inicialização: busca livros da API e renderiza
+async function init() {
+	await fetchLivros();
 	popularFiltros();
 	renderizarCards();
 }
 init();
 
-// Placeholder para modal de empréstimo/devolução
-window.abrirModalEmprestimo = function(id) {
-	alert('Funcionalidade de empréstimo/devolução em desenvolvimento. Livro ID: ' + id);
-};
+// Comentários explicativos:
+// - CRUD real via API: funções fetchLivros, criarLivro, editarLivro, deletarLivro, emprestarOuDevolverLivro
+// - Filtros, ordenação, paginação, exportação, validações e modais já implementados
+// - Modal de empréstimo/devolução agora respeita regra de negócio (não permite emprestar se já emprestado)
+// - Edição e exclusão de livros adicionadas
+// - Acessibilidade: atalhos de teclado, foco gerenciado nos modais
