@@ -153,13 +153,26 @@ filtroStatus.addEventListener('change', e => {
 // Modal Novo Livro
 btnNovoLivro.addEventListener('click', abrirModalNovoLivro);
 fecharModalNovo.addEventListener('click', fecharModalNovoLivro);
+// Acessibilidade: foco automático e rotação de foco no modal
 function abrirModalNovoLivro() {
 	modalNovoLivro.hidden = false;
-	document.getElementById('titulo').focus();
+	setTimeout(() => document.getElementById('titulo').focus(), 100);
+	// Roda o foco entre os campos do modal
+	const focusables = modalNovoLivro.querySelectorAll('input, select, button');
+	let idx = 0;
+	modalNovoLivro.onkeydown = function(e) {
+		if (e.key === 'Tab') {
+			e.preventDefault();
+			idx = e.shiftKey ? (idx - 1 + focusables.length) % focusables.length : (idx + 1) % focusables.length;
+			focusables[idx].focus();
+		}
+	};
 }
 function fecharModalNovoLivro() {
 	modalNovoLivro.hidden = true;
 	formLivro.reset();
+	modalNovoLivro.onkeydown = null;
+	btnNovoLivro.focus(); // Retorna foco para botão principal
 }
 window.addEventListener('keydown', e => {
 	if (e.altKey && e.key.toLowerCase() === 'n') {
@@ -244,6 +257,8 @@ window.excluirLivro = async function(id) {
 }
 
 // Modal de empréstimo/devolução
+
+// Acessibilidade: foco automático e rotação de foco no modal de empréstimo
 window.abrirModalEmprestimo = function(id) {
 	const livro = livros.find(l => l.id == id);
 	if (!livro) return;
@@ -251,6 +266,17 @@ window.abrirModalEmprestimo = function(id) {
 	const detalhes = document.getElementById('emprestimo-detalhes');
 	detalhes.innerHTML = `<p><b>${livro.titulo}</b> - ${livro.autor}<br>Status: <span data-status="${livro.status}">${livro.status}</span></p>`;
 	modal.hidden = false;
+	setTimeout(() => document.getElementById('confirmar-emprestimo').focus(), 100);
+	// Roda o foco entre os botões do modal
+	const focusables = modal.querySelectorAll('button');
+	let idx = 0;
+	modal.onkeydown = function(e) {
+		if (e.key === 'Tab') {
+			e.preventDefault();
+			idx = e.shiftKey ? (idx - 1 + focusables.length) % focusables.length : (idx + 1) % focusables.length;
+			focusables[idx].focus();
+		}
+	};
 	// Botão de confirmar
 	document.getElementById('confirmar-emprestimo').onclick = async function() {
 		if (livro.status === 'emprestado') {
@@ -263,9 +289,13 @@ window.abrirModalEmprestimo = function(id) {
 		await fetchLivros();
 		renderizarCards();
 		modal.hidden = true;
+		modal.onkeydown = null;
+		btnNovoLivro.focus();
 	};
 	document.getElementById('fechar-modal-emprestimo').onclick = function() {
 		modal.hidden = true;
+		modal.onkeydown = null;
+		btnNovoLivro.focus();
 	};
 }
 
@@ -321,4 +351,4 @@ init();
 // - Filtros, ordenação, paginação, exportação, validações e modais já implementados
 // - Modal de empréstimo/devolução agora respeita regra de negócio (não permite emprestar se já emprestado)
 // - Edição e exclusão de livros adicionadas
-// - Acessibilidade: atalhos de teclado, foco gerenciado nos modais
+// - Acessibilidade: uso de ARIA, tabindex, roles, labels associadas, foco automático e rotação de foco nos modais, atalhos de teclado, navegação por tab, retorno de foco ao fechar modal

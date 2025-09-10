@@ -1,0 +1,40 @@
+### Teste de saúde da API
+GET http://localhost:8000/
+
+### Listar livros
+GET http://localhost:8000/livros
+
+### Criar livro
+POST http://localhost:8000/livros
+Content-Type: application/json
+
+{
+  "titulo": "Teste API",
+  "autor": "Autor Teste",
+  "ano": 2020,
+  "genero": "Teste",
+  "isbn": "1234567890",
+  "status": "disponivel"
+}
+
+### Editar livro (ajuste o ID)
+PUT http://localhost:8000/livros/1
+Content-Type: application/json
+
+{
+  "titulo": "Teste Editado",
+  "autor": "Autor Editado",
+  "ano": 2021,
+  "genero": "Teste",
+  "isbn": "0987654321",
+  "status": "disponivel"
+}
+
+### Emprestar livro (ajuste o ID)
+POST http://localhost:8000/livros/1/emprestar
+
+### Devolver livro (ajuste o ID)
+POST http://localhost:8000/livros/1/devolver
+
+### Deletar livro (ajuste o ID)
+DELETE http://localhost:8000/livros/1

@@ -7,74 +7,75 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 </head>
+
 <body>
-    <header class="header">
+    <header class="header" role="banner">
         <div class="logo-titulo">
-            <span class="logo">📚</span>
-            <h1>Biblioteca Escolar</h1>
+            <span class="logo" aria-hidden="true">📚</span>
+            <h1 tabindex="0">Biblioteca Escolar</h1>
         </div>
-        <input type="search" id="search" placeholder="Buscar por título ou autor..." aria-label="Buscar livros">
+        <input type="search" id="search" placeholder="Buscar por título ou autor..." aria-label="Buscar livros" tabindex="0">
     </header>
     <div class="container">
-        <aside class="sidebar">
-            <h2>Filtros</h2>
+        <aside class="sidebar" role="complementary" aria-label="Filtros de pesquisa">
+            <h2 tabindex="0">Filtros</h2>
             <div>
                 <label for="filtro-genero">Gênero</label>
-                <select id="filtro-genero"></select>
+                <select id="filtro-genero" tabindex="0"></select>
             </div>
             <div>
                 <label for="filtro-ano">Ano</label>
-                <select id="filtro-ano"></select>
+                <select id="filtro-ano" tabindex="0"></select>
             </div>
             <div>
                 <label for="filtro-status">Status</label>
-                <select id="filtro-status">
+                <select id="filtro-status" tabindex="0">
                     <option value="">Todos</option>
                     <option value="disponivel">Disponível</option>
                     <option value="emprestado">Emprestado</option>
                 </select>
             </div>
         </aside>
-        <main class="main-content">
+        <main class="main-content" role="main">
             <div class="toolbar">
-                <button id="btn-novo-livro" accesskey="n" title="Alt+N">Novo Livro</button>
-                <button id="btn-exportar">Exportar CSV/JSON</button>
+                <button id="btn-novo-livro" accesskey="n" title="Alt+N" tabindex="0" aria-label="Adicionar novo livro">Novo Livro</button>
+                <button id="btn-exportar" tabindex="0" aria-label="Exportar lista de livros">Exportar CSV/JSON</button>
             </div>
-            <section id="card-list" aria-live="polite"></section>
-            <nav id="paginacao"></nav>
+            <section id="card-list" aria-live="polite" aria-label="Lista de livros" tabindex="0"></section>
+            <nav id="paginacao" aria-label="Paginação de livros"></nav>
         </main>
     </div>
 
     <!-- Modal Novo Livro -->
-    <div id="modal-novo-livro" class="modal" aria-modal="true" role="dialog" tabindex="-1" hidden>
+    <div id="modal-novo-livro" class="modal" aria-modal="true" role="dialog" tabindex="-1" hidden aria-labelledby="titulo-modal-novo-livro">
         <div class="modal-content">
-            <h2>Novo Livro</h2>
+            <h2 id="titulo-modal-novo-livro">Novo Livro</h2>
             <form id="form-livro">
-                <label>Título* <input type="text" id="titulo" required minlength="3" maxlength="90"></label>
-                <label>Autor* <input type="text" id="autor" required></label>
-                <label>Ano* <input type="number" id="ano" min="1900" max="2099" required></label>
-                <label>Gênero <select id="genero"></select></label>
-                <label>ISBN <input type="text" id="isbn"></label>
-                <label>Status* <select id="status" required>
+                <label for="titulo">Título* </label><input type="text" id="titulo" required minlength="3" maxlength="90" tabindex="0">
+                <label for="autor">Autor* </label><input type="text" id="autor" required tabindex="0">
+                <label for="ano">Ano* </label><input type="number" id="ano" min="1900" max="2099" required tabindex="0">
+                <label for="genero">Gênero </label><select id="genero" tabindex="0"></select>
+                <label for="isbn">ISBN </label><input type="text" id="isbn" tabindex="0">
+                <label for="status">Status* </label><select id="status" required tabindex="0">
                     <option value="disponivel">Disponível</option>
                     <option value="emprestado">Emprestado</option>
-                </select></label>
+                </select>
                 <div class="modal-actions">
-                    <button type="submit">Salvar</button>
-                    <button type="button" id="fechar-modal-novo">Cancelar</button>
+                    <button type="submit" tabindex="0">Salvar</button>
+                    <button type="button" id="fechar-modal-novo" tabindex="0">Cancelar</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- Modal Empréstimo/Devolução -->
-    <div id="modal-emprestimo" class="modal" aria-modal="true" role="dialog" tabindex="-1" hidden>
+    <div id="modal-emprestimo" class="modal" aria-modal="true" role="dialog" tabindex="-1" hidden aria-labelledby="titulo-modal-emprestimo">
         <div class="modal-content">
-            <h2>Empréstimo/Devolução</h2>
+            <h2 id="titulo-modal-emprestimo">Empréstimo/Devolução</h2>
             <div id="emprestimo-detalhes"></div>
             <div class="modal-actions">
-                <button id="confirmar-emprestimo">Confirmar</button>
-                <button id="fechar-modal-emprestimo">Cancelar</button>
+                <button id="confirmar-emprestimo" tabindex="0">Confirmar</button>
+                <button id="fechar-modal-emprestimo" tabindex="0">Cancelar</button>
             </div>
         </div>
     </div>
