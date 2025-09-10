@@ -7,11 +7,33 @@ let ordenacao = { campo: 'titulo', direcao: 'asc' };
 let paginaAtual = 1;
 const ITENS_POR_PAGINA = 10;
 const API_URL = 'http://localhost:8000/livros'; // Ajuste se necessário
+// Gêneros padrão caso a base não tenha nenhum definido
+const DEFAULT_GENEROS = [
+	'Ficção',
+	'Não-ficção',
+	'Fantasia',
+	'Romance',
+	'Infantil',
+	'Ciência',
+	'História',
+	'Biografia'
+];
 
 // Função utilitária para buscar todos os livros da API
 async function fetchLivros() {
-	const res = await fetch(API_URL);
-	livros = await res.json();
+	try {
+		const res = await fetch(API_URL);
+		if (!res.ok) {
+			console.warn('Falha ao buscar livros, status:', res.status);
+			livros = [];
+			return;
+		}
+		livros = await res.json();
+	} catch (err) {
+		console.warn('Erro ao buscar livros da API:', err);
+		// não trava a inicialização — usa lista vazia para que os filtros padrão sejam aplicados
+		livros = [];
+	}
 }
 
 // Função utilitária para criar um novo livro na API
@@ -332,8 +354,17 @@ btnExportar.addEventListener('click', () => {
 
 // Popular filtros de gênero e ano
 function popularFiltros() {
-	const generos = Array.from(new Set(livros.map(l => l.genero))).filter(Boolean);
+	// Extrai gêneros presentes na base; se nenhum, usa os padrões
+	let generos = Array.from(new Set(livros.map(l => l.genero))).filter(Boolean);
+	if (generos.length === 0) generos = DEFAULT_GENEROS.slice();
 	filtroGenero.innerHTML = '<option value="">Todos</option>' + generos.map(g => `<option value="${g}">${g}</option>`).join('');
+
+	// Também popular o select do modal de cadastro/edição
+	const generoModal = document.getElementById('genero');
+	if (generoModal) {
+		generoModal.innerHTML = '<option value="">(nenhum)</option>' + generos.map(g => `<option value="${g}">${g}</option>`).join('');
+	}
+
 	const anos = Array.from(new Set(livros.map(l => l.ano))).sort();
 	filtroAno.innerHTML = '<option value="">Todos</option>' + anos.map(a => `<option value="${a}">${a}</option>`).join('');
 }
