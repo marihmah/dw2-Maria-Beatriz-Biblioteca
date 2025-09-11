@@ -31,7 +31,7 @@ class LivroSchema(BaseModel):
 class LivroOut(LivroSchema):
     id: int
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # GET /livros?search=&genero=&ano=&status=
 @app.get("/livros", response_model=List[LivroOut])

@@ -43,7 +43,12 @@ async function criarLivro(livro) {
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify(livro)
 	});
-	return res.ok;
+	let data = null;
+	try { data = await res.json(); } catch (e) { }
+	if (!res.ok) {
+		throw new Error((data && (data.detail || data.message)) || 'Falha ao criar livro');
+	}
+	return data;
 }
 
 // Função utilitária para editar um livro na API
@@ -53,19 +58,35 @@ async function editarLivro(id, livro) {
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify(livro)
 	});
-	return res.ok;
+	let data = null;
+	try { data = await res.json(); } catch (e) { }
+	if (!res.ok) {
+		throw new Error((data && (data.detail || data.message)) || 'Falha ao editar livro');
+	}
+	return data;
 }
 
 // Função utilitária para deletar um livro na API
 async function deletarLivro(id) {
 	const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-	return res.ok;
+	let data = null;
+	try { data = await res.json(); } catch (e) { }
+	if (!res.ok) {
+		throw new Error((data && (data.detail || data.message)) || 'Falha ao deletar livro');
+	}
+	return true;
 }
 
 // Função utilitária para atualizar status de empréstimo/devolução
 async function emprestarOuDevolverLivro(id, acao) {
-	const res = await fetch(`${API_URL}/${id}/${acao}`, { method: 'PATCH' });
-	return res.ok;
+	// Backend expõe /emprestar e /devolver como POST
+	const res = await fetch(`${API_URL}/${id}/${acao}`, { method: 'POST' });
+	let data = null;
+	try { data = await res.json(); } catch (e) { }
+	if (!res.ok) {
+		throw new Error((data && (data.detail || data.message)) || 'Falha na operação');
+	}
+	return data;
 }
 
 // Elementos DOM
@@ -178,6 +199,8 @@ fecharModalNovo.addEventListener('click', fecharModalNovoLivro);
 // Acessibilidade: foco automático e rotação de foco no modal
 function abrirModalNovoLivro() {
 	modalNovoLivro.hidden = false;
+	// garantir que o form não está em modo edição
+	delete formLivro.dataset.editingId;
 	setTimeout(() => document.getElementById('titulo').focus(), 100);
 	// Roda o foco entre os campos do modal
 	const focusables = modalNovoLivro.querySelectorAll('input, select, button');
@@ -193,6 +216,7 @@ function abrirModalNovoLivro() {
 function fecharModalNovoLivro() {
 	modalNovoLivro.hidden = true;
 	formLivro.reset();
+	delete formLivro.dataset.editingId;
 	modalNovoLivro.onkeydown = null;
 	btnNovoLivro.focus(); // Retorna foco para botão principal
 }
@@ -208,35 +232,89 @@ window.addEventListener('keydown', e => {
 
 
 // CRUD Livro (agora integrado com API)
+// Helper simples para mostrar notificações temporárias no topo
+function showNotification(msg, timeout = 2500) {
+	const el = document.createElement('div');
+	el.textContent = msg;
+	el.style.position = 'fixed';
+	el.style.top = '1rem';
+	el.style.right = '1rem';
+	el.style.background = '#10B981';
+	el.style.color = '#fff';
+	el.style.padding = '0.6rem 1rem';
+	el.style.borderRadius = '6px';
+	el.style.zIndex = 9999;
+	document.body.appendChild(el);
+	setTimeout(() => el.remove(), timeout);
+}
+
 formLivro.addEventListener('submit', async e => {
 	e.preventDefault();
+	const editingId = formLivro.dataset.editingId || null;
 	const titulo = document.getElementById('titulo').value.trim();
 	const autor = document.getElementById('autor').value.trim();
 	const ano = parseInt(document.getElementById('ano').value);
 	const genero = document.getElementById('genero').value;
 	const isbn = document.getElementById('isbn').value.trim();
 	const status = document.getElementById('status').value;
+
 	// Validações
 	if (titulo.length < 3 || titulo.length > 90) {
 		alert('Título deve ter entre 3 e 90 caracteres.');
-		return;
-	}
-	if (livros.some(l => l.titulo.toLowerCase() === titulo.toLowerCase())) {
-		alert('Já existe um livro com esse título.');
 		return;
 	}
 	if (ano < 1900 || ano > new Date().getFullYear()) {
 		alert('Ano inválido.');
 		return;
 	}
-	const novoLivro = {
-		titulo, autor, ano, genero, isbn, status,
-		data_emprestimo: null
-	};
-	await criarLivro(novoLivro); // Chama API
-	await fetchLivros(); // Atualiza lista
-	fecharModalNovoLivro();
-	renderizarCards();
+
+	// Edição
+	if (editingId) {
+		const editado = { titulo, autor, ano, genero, isbn, status };
+		try {
+			const updated = await editarLivro(editingId, editado);
+			// atualiza estado local
+			const idx = livros.findIndex(l => l.id == editingId);
+			if (idx >= 0) livros[idx] = updated;
+			salvarLocalStorage();
+			popularFiltros();
+			fecharModalNovoLivro();
+			delete formLivro.dataset.editingId;
+			renderizarCards();
+			showNotification('Livro editado com sucesso.');
+		} catch (err) {
+			alert(err.message || 'Erro ao editar livro.');
+		}
+		return;
+	}
+
+	// Criação
+	if (livros.some(l => l.titulo.toLowerCase() === titulo.toLowerCase())) {
+		alert('Já existe um livro com esse título.');
+		return;
+	}
+
+	const novoLivro = { titulo, autor, ano, genero, isbn, status, data_emprestimo: null };
+	try {
+		const criado = await criarLivro(novoLivro);
+		if (criado && criado.id) {
+			livros.push(criado);
+			salvarLocalStorage();
+			popularFiltros();
+			fecharModalNovoLivro();
+			renderizarCards();
+			showNotification('Livro adicionado com sucesso.');
+		} else {
+			// fallback seguro: recarrega do servidor
+			await fetchLivros();
+			popularFiltros();
+			fecharModalNovoLivro();
+			renderizarCards();
+			showNotification('Livro adicionado.');
+		}
+	} catch (err) {
+		alert(err.message || 'Erro ao adicionar livro');
+	}
 });
 
 // Função para abrir modal de edição de livro (exemplo simplificado)
@@ -250,23 +328,8 @@ window.editarLivroModal = function(id) {
 	document.getElementById('isbn').value = livro.isbn;
 	document.getElementById('status').value = livro.status;
 	modalNovoLivro.hidden = false;
-	// Ao salvar, chama editarLivro
-	formLivro.onsubmit = async function(e) {
-		e.preventDefault();
-		const editado = {
-			titulo: document.getElementById('titulo').value.trim(),
-			autor: document.getElementById('autor').value.trim(),
-			ano: parseInt(document.getElementById('ano').value),
-			genero: document.getElementById('genero').value,
-			isbn: document.getElementById('isbn').value.trim(),
-			status: document.getElementById('status').value
-		};
-		await editarLivro(id, editado);
-		await fetchLivros();
-		fecharModalNovoLivro();
-		renderizarCards();
-		formLivro.onsubmit = null; // Limpa handler
-	};
+	// marca que o form está em modo edição
+	formLivro.dataset.editingId = id;
 }
 
 // Função para excluir livro
@@ -301,18 +364,21 @@ window.abrirModalEmprestimo = function(id) {
 	};
 	// Botão de confirmar
 	document.getElementById('confirmar-emprestimo').onclick = async function() {
-		if (livro.status === 'emprestado') {
-			// Devolução
-			await emprestarOuDevolverLivro(id, 'devolver');
-		} else {
-			// Empréstimo
-			await emprestarOuDevolverLivro(id, 'emprestar');
+		try {
+			const result = await emprestarOuDevolverLivro(id, livro.status === 'emprestado' ? 'devolver' : 'emprestar');
+			// atualiza estado local com o objeto retornado
+			const idx = livros.findIndex(l => l.id == id);
+			if (idx >= 0 && result) livros[idx] = result;
+			salvarLocalStorage();
+			popularFiltros();
+			renderizarCards();
+			modal.hidden = true;
+			modal.onkeydown = null;
+			btnNovoLivro.focus();
+			showNotification('Operação realizada.');
+		} catch (err) {
+			alert(err.message || 'Erro ao realizar operação');
 		}
-		await fetchLivros();
-		renderizarCards();
-		modal.hidden = true;
-		modal.onkeydown = null;
-		btnNovoLivro.focus();
 	};
 	document.getElementById('fechar-modal-emprestimo').onclick = function() {
 		modal.hidden = true;
