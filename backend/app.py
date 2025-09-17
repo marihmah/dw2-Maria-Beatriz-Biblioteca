@@ -6,8 +6,8 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
-from models import Livro
-from database import SessionLocal
+from .models import Livro
+from .database import SessionLocal
 
 app = FastAPI()
 
@@ -22,7 +22,8 @@ app.add_middleware(
 class LivroSchema(BaseModel):
     titulo: str = Field(..., min_length=3, max_length=90)
     autor: str = Field(..., min_length=1, max_length=90)
-    ano: int = Field(..., ge=1900, le=datetime.now().year)
+    # Aceita anos antigos (compatível com clássicos) até o ano atual
+    ano: int = Field(..., ge=1500, le=datetime.now().year)
     genero: Optional[str] = None
     isbn: Optional[str] = None
     status: str = Field(default="disponivel")

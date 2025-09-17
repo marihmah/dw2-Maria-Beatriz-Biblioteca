@@ -6,7 +6,7 @@ let filtro = { genero: '', ano: '', status: '', texto: '' };
 let ordenacao = { campo: 'titulo', direcao: 'asc' };
 let paginaAtual = 1;
 const ITENS_POR_PAGINA = 10;
-const API_URL = 'http://localhost:8000/livros'; // Ajuste se necessário
+const API_URL = 'http://127.0.0.1:8000/livros'; // usar 127.0.0.1 evita possíveis conflitos de IPv6/localhost
 // Gêneros padrão caso a base não tenha nenhum definido
 const DEFAULT_GENEROS = [
 	'Ficção',
