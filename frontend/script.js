@@ -1,5 +1,3 @@
-
-
 // Estado local e configuração da API
 let livros = [];
 let filtro = { genero: '', ano: '', status: '', texto: '' };
@@ -100,7 +98,20 @@ const searchInput = document.getElementById('search');
 const filtroGenero = document.getElementById('filtro-genero');
 const filtroAno = document.getElementById('filtro-ano');
 const filtroStatus = document.getElementById('filtro-status');
-const btnExportar = document.getElementById('btn-exportar');
+const btnExportar = document.getElementById('btn-exportar'); // agora abre dropdown
+const toggleViewBtn = document.getElementById('toggle-view');
+const statTotal = document.getElementById('stat-total');
+const statDisp = document.getElementById('stat-disponiveis');
+const statEmp = document.getElementById('stat-emprestados');
+const statFiltrados = document.getElementById('stat-filtrados');
+const chipsContainer = document.getElementById('chips-filtros');
+const ordenacaoSelect = document.getElementById('ordenacao-select');
+const btnReload = document.getElementById('btn-reload');
+const btnLimparFiltros = document.getElementById('btn-limpar-filtros');
+const btnAjuda = document.getElementById('btn-ajuda');
+const btnImportar = document.getElementById('btn-importar');
+const exportMenu = document.getElementById('menu-exportar');
+const exportDropdownBtn = document.getElementById('btn-exportar');
 
 // Funções utilitárias
 function salvarLocalStorage() {
@@ -387,35 +398,7 @@ window.abrirModalEmprestimo = function(id) {
 	};
 }
 
-// Exportar CSV/JSON
-btnExportar.addEventListener('click', () => {
-	const filtrados = livros.filter(livro => {
-		const texto = filtro.texto.toLowerCase();
-		return (
-			(!filtro.genero || livro.genero === filtro.genero) &&
-			(!filtro.ano || livro.ano == filtro.ano) &&
-			(!filtro.status || livro.status === filtro.status) &&
-			(
-				livro.titulo.toLowerCase().includes(texto) ||
-				livro.autor.toLowerCase().includes(texto)
-			)
-		);
-	});
-	const json = JSON.stringify(filtrados, null, 2);
-	const csv = 'titulo,autor,ano,genero,isbn,status\n' + filtrados.map(l => `${l.titulo},${l.autor},${l.ano},${l.genero},${l.isbn},${l.status}`).join('\n');
-	// Download
-	const blob = new Blob([json], {type: 'application/json'});
-	const a = document.createElement('a');
-	a.href = URL.createObjectURL(blob);
-	a.download = 'livros.json';
-	a.click();
-	// CSV download
-	const blob2 = new Blob([csv], {type: 'text/csv'});
-	const a2 = document.createElement('a');
-	a2.href = URL.createObjectURL(blob2);
-	a2.download = 'livros.csv';
-	a2.click();
-});
+// (handler antigo de exportação removido — agora usamos dropdown)
 
 
 // Popular filtros de gênero e ano
@@ -449,3 +432,277 @@ init();
 // - Modal de empréstimo/devolução agora respeita regra de negócio (não permite emprestar se já emprestado)
 // - Edição e exclusão de livros adicionadas
 // - Acessibilidade: uso de ARIA, tabindex, roles, labels associadas, foco automático e rotação de foco nos modais, atalhos de teclado, navegação por tab, retorno de foco ao fechar modal
+
+// (declarações duplicadas removidas)
+
+function contarResumo(filtradosLength, totalAntesFiltro) {
+	if (!statTotal) return;
+	const totalGeral = livros.length;
+	const emprestados = livros.filter(l => l.status === 'emprestado').length;
+	const disponiveis = totalGeral - emprestados;
+	statTotal.querySelector('strong').textContent = totalGeral;
+	statDisp.querySelector('strong').textContent = disponiveis;
+	statEmp.querySelector('strong').textContent = emprestados;
+	if (filtradosLength !== totalGeral) {
+		statFiltrados.hidden = false;
+		statFiltrados.querySelector('strong').textContent = filtradosLength;
+	} else {
+		statFiltrados.hidden = true;
+	}
+}
+
+function gerarChipsFiltros() {
+	if (!chipsContainer) return;
+	chipsContainer.innerHTML = '';
+	const chips = [];
+	if (filtro.genero) chips.push({ tipo: 'genero', label: filtro.genero });
+	if (filtro.ano) chips.push({ tipo: 'ano', label: filtro.ano });
+	if (filtro.status) chips.push({ tipo: 'status', label: filtro.status });
+	if (filtro.texto) chips.push({ tipo: 'texto', label: `"${filtro.texto}"` });
+	chips.forEach(ch => {
+		const b = document.createElement('button');
+		b.className = 'chip';
+		b.type = 'button';
+		b.setAttribute('data-chip', ch.tipo);
+		b.innerHTML = `${ch.label} <span aria-hidden="true">✕</span>`;
+		b.title = 'Remover filtro ' + ch.tipo;
+		b.onclick = () => {
+			if (ch.tipo in filtro) {
+				filtro[ch.tipo] = '';
+				if (ch.tipo === 'texto') searchInput.value = '';
+				paginaAtual = 1;
+				renderizarCards();
+				gerarChipsFiltros();
+			}
+		};
+		chipsContainer.appendChild(b);
+	});
+	if (chips.length === 0) {
+		chipsContainer.innerHTML = '<span class="chips-empty" aria-disabled="true">Nenhum filtro ativo</span>';
+	}
+}
+
+// Override de exportações para usar menu
+function exportarDados(formato, apenasFiltrados = false) {
+	const texto = filtro.texto.toLowerCase();
+	let filtrados = livros.filter(livro => (
+		(!filtro.genero || livro.genero === filtro.genero) &&
+		(!filtro.ano || livro.ano == filtro.ano) &&
+		(!filtro.status || livro.status === filtro.status) &&
+		(livro.titulo.toLowerCase().includes(texto) || livro.autor.toLowerCase().includes(texto))
+	));
+	const base = apenasFiltrados ? filtrados : livros;
+	if (formato.startsWith('csv')) {
+		const csv = 'titulo,autor,ano,genero,isbn,status\n' + base.map(l => `${l.titulo},${l.autor},${l.ano},${l.genero||''},${l.isbn||''},${l.status}`).join('\n');
+		const blob = new Blob([csv], { type: 'text/csv' });
+		const a = document.createElement('a');
+		a.href = URL.createObjectURL(blob);
+		a.download = `livros${apenasFiltrados?'-filtrados':''}.csv`;
+		a.click();
+		return;
+	}
+	// JSON
+	const json = JSON.stringify(base, null, 2);
+	const blob = new Blob([json], { type: 'application/json' });
+	const a = document.createElement('a');
+	a.href = URL.createObjectURL(blob);
+	a.download = `livros${apenasFiltrados?'-filtrados':''}.json`;
+	a.click();
+}
+
+if (exportDropdownBtn && exportMenu) {
+	// garante estado inicial oculto
+	exportMenu.hidden = true;
+	exportDropdownBtn.addEventListener('click', () => {
+		const willOpen = exportMenu.hidden;
+		if (willOpen) {
+			exportMenu.hidden = false;
+			exportDropdownBtn.setAttribute('aria-expanded', 'true');
+			// foca primeiro item
+			setTimeout(() => {
+				const first = exportMenu.querySelector('button[data-exp]');
+				first && first.focus();
+			}, 30);
+		} else {
+			exportMenu.hidden = true;
+			exportDropdownBtn.setAttribute('aria-expanded', 'false');
+		}
+	});
+
+	// Teclado no botão (Enter/Espaço/Seta para baixo abre)
+	exportDropdownBtn.addEventListener('keydown', e => {
+		if (['Enter',' '].includes(e.key) || e.key === 'ArrowDown') {
+			e.preventDefault();
+			if (exportMenu.hidden) {
+				exportMenu.hidden = false;
+				exportDropdownBtn.setAttribute('aria-expanded', 'true');
+				setTimeout(() => {
+					const first = exportMenu.querySelector('button[data-exp]');
+					first && first.focus();
+				}, 30);
+			}
+		}
+		if (e.key === 'Escape' && !exportMenu.hidden) {
+			exportMenu.hidden = true;
+			exportDropdownBtn.setAttribute('aria-expanded', 'false');
+			exportDropdownBtn.focus();
+		}
+	});
+
+	exportMenu.addEventListener('keydown', e => {
+		if (e.key === 'Escape') {
+			exportMenu.hidden = true;
+			exportDropdownBtn.setAttribute('aria-expanded', 'false');
+			exportDropdownBtn.focus();
+		}
+		if (['ArrowDown','ArrowUp'].includes(e.key)) {
+			e.preventDefault();
+			const items = [...exportMenu.querySelectorAll('button[data-exp]')];
+			const idx = items.indexOf(document.activeElement);
+			if (idx >= 0) {
+				let next = e.key === 'ArrowDown' ? idx + 1 : idx - 1;
+				if (next < 0) next = items.length - 1;
+				if (next >= items.length) next = 0;
+				items[next].focus();
+			}
+		}
+	});
+	exportMenu.addEventListener('click', e => {
+		const btn = e.target.closest('button[data-exp]');
+		if (!btn) return;
+		const val = btn.getAttribute('data-exp');
+		if (val === 'csv') exportarDados('csv', false);
+		else if (val === 'json') exportarDados('json', false);
+		else if (val === 'csv-filtrados') exportarDados('csv', true);
+		else if (val === 'json-filtrados') exportarDados('json', true);
+		exportMenu.hidden = true;
+		exportDropdownBtn.setAttribute('aria-expanded', 'false');
+	});
+	// fechar ao clicar fora
+	document.addEventListener('click', e => {
+		if (!exportMenu.hidden && !e.target.closest('#export-dropdown')) {
+			exportMenu.hidden = true;
+			exportDropdownBtn.setAttribute('aria-expanded', 'false');
+		}
+	});
+}
+
+if (ordenacaoSelect) {
+	ordenacaoSelect.addEventListener('change', e => {
+		const val = e.target.value;
+		if (val.startsWith('titulo')) {
+			ordenacao.campo = 'titulo';
+			ordenacao.direcao = val.endsWith('asc') ? 'asc' : 'desc';
+		} else if (val.startsWith('ano')) {
+			ordenacao.campo = 'ano';
+			ordenacao.direcao = val.endsWith('asc') ? 'asc' : 'desc';
+		}
+		paginaAtual = 1;
+		renderizarCards();
+	});
+}
+
+if (btnReload) {
+	btnReload.addEventListener('click', async () => {
+		await fetchLivros();
+		popularFiltros();
+		renderizarCards();
+		showNotification('Lista recarregada');
+	});
+}
+
+if (btnLimparFiltros) {
+	btnLimparFiltros.addEventListener('click', () => {
+		filtro = { genero: '', ano: '', status: '', texto: '' };
+		searchInput.value = '';
+		filtroGenero.value = '';
+		filtroAno.value = '';
+		filtroStatus.value = '';
+		paginaAtual = 1;
+		renderizarCards();
+		gerarChipsFiltros();
+		showNotification('Filtros limpos');
+	});
+}
+
+if (btnAjuda) {
+	btnAjuda.addEventListener('click', () => {
+		alert('Use os filtros à esquerda, clique em Novo Livro para cadastrar, Exportar para baixar dados e o menu de ordenação para reorganizar a lista.');
+	});
+}
+
+if (btnImportar) {
+	btnImportar.addEventListener('click', async () => {
+		const input = document.createElement('input');
+		input.type = 'file';
+		input.accept = 'application/json';
+		input.onchange = async () => {
+			const file = input.files?.[0];
+			if (!file) return;
+			try {
+				const text = await file.text();
+				const data = JSON.parse(text);
+				if (!Array.isArray(data)) throw new Error('Formato inválido');
+				// valida campos mínimos
+				const validos = data.filter(d => d.titulo && d.autor && d.ano);
+				if (validos.length === 0) throw new Error('Nenhum registro válido');
+				// estratégia simples: mesclar ignorando duplicados por título
+				const existentesTitulos = new Set(livros.map(l => l.titulo.toLowerCase()));
+				const novos = [];
+				for (const v of validos) {
+					if (!existentesTitulos.has(v.titulo.toLowerCase())) {
+						novos.push({
+							...v,
+							status: v.status || 'disponivel',
+							data_emprestimo: v.data_emprestimo || null
+						});
+					}
+				}
+				// apenas local (não envia ao backend individualmente para simplificar)
+				livros = livros.concat(novos);
+				salvarLocalStorage();
+				popularFiltros();
+				renderizarCards();
+				gerarChipsFiltros();
+				showNotification(`${novos.length} registros importados.`);
+			} catch (err) {
+				alert('Falha ao importar: ' + err.message);
+			}
+		};
+		input.click();
+	});
+}
+
+// Ajustar renderização para atualizar stats e chips
+typeof renderizarCardsOriginal === 'undefined' && (window.renderizarCardsOriginal = renderizarCards);
+renderizarCards = function() {
+	// chama original
+	window.renderizarCardsOriginal();
+	// pós-render
+	// reconstruir lista filtrada para contagem (repete lógica reduzida)
+	const texto = filtro.texto.toLowerCase();
+	const filtrados = livros.filter(livro => (
+		(!filtro.genero || livro.genero === filtro.genero) &&
+		(!filtro.ano || livro.ano == filtro.ano) &&
+		(!filtro.status || livro.status === filtro.status) &&
+		(livro.titulo.toLowerCase().includes(texto) || livro.autor.toLowerCase().includes(texto))
+	));
+	contarResumo(filtrados.length, livros.length);
+	gerarChipsFiltros();
+};
+
+// Chamada inicial para chips/resumo após init
+setTimeout(() => { gerarChipsFiltros(); contarResumo(livros.length, livros.length); }, 400);
+
+// Toggle de visualização (grade/lista simples)
+if (toggleViewBtn) {
+	toggleViewBtn.addEventListener('click', () => {
+		const listMode = cardList.classList.toggle('list-view');
+		toggleViewBtn.setAttribute('aria-pressed', String(listMode));
+		if (listMode) {
+			toggleViewBtn.title = 'Alternar para visualização em grade';
+		} else {
+			toggleViewBtn.title = 'Alternar para visualização em lista';
+		}
+	});
+}

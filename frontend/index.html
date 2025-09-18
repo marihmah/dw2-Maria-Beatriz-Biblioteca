@@ -5,17 +5,23 @@
     <meta charset="UTF-8">
     <title>Biblioteca Escolar</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Fontes: Sans (Inter/Roboto) + Serif elegante para o título -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;500;700&family=Playfair+Display:wght@500;600;700&family=Lora:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 
 <body>
     <header class="header" role="banner">
-        <div class="logo-titulo">
-            <span class="logo" aria-hidden="true">📚</span>
-            <h1 tabindex="0">Biblioteca Escolar</h1>
+        <div class="header-inner">
+            <div class="logo-titulo">
+                <span class="logo" aria-hidden="true">📚</span>
+                <h1 class="site-title" tabindex="0">Biblioteca Escolar</h1>
+            </div>
+            <div class="search-wrapper">
+                <input type="search" id="search" placeholder="Buscar por título ou autor..." aria-label="Buscar livros" tabindex="0">
+            </div>
         </div>
-        <input type="search" id="search" placeholder="Buscar por título ou autor..." aria-label="Buscar livros" tabindex="0">
     </header>
+    <div class="page-shell">
     <div class="container">
         <aside class="sidebar" role="complementary" aria-label="Filtros de pesquisa">
             <h2 tabindex="0">Filtros</h2>
@@ -37,13 +43,46 @@
             </div>
         </aside>
         <main class="main-content" role="main">
-            <div class="toolbar">
-                <button id="btn-novo-livro" accesskey="n" title="Alt+N" tabindex="0" aria-label="Adicionar novo livro">Novo Livro</button>
-                <button id="btn-exportar" tabindex="0" aria-label="Exportar lista de livros">Exportar CSV/JSON</button>
+            <div class="toolbar" aria-label="Barra de ações e resumo do acervo">
+                <div class="toolbar-top">
+                    <div class="toolbar-summary" aria-live="polite">
+                        <span id="stat-total" class="stat-pill" title="Total de livros">Total: <strong>0</strong></span>
+                        <span id="stat-disponiveis" class="stat-pill" title="Livros disponíveis">Disponíveis: <strong>0</strong></span>
+                        <span id="stat-emprestados" class="stat-pill" title="Livros emprestados">Emprestados: <strong>0</strong></span>
+                        <span id="stat-filtrados" class="stat-pill muted" hidden title="Resultado atual após filtros">Filtrados: <strong>0</strong></span>
+                    </div>
+                    <div id="chips-filtros" class="toolbar-chips" aria-label="Filtros ativos"></div>
+                </div>
+                <div class="toolbar-actions" role="group" aria-label="Ações">
+                    <button id="btn-novo-livro" accesskey="n" title="Alt+N" aria-label="Adicionar novo livro">Novo Livro</button>
+                    <div class="group-inline">
+                        <button id="btn-importar" class="secondary" aria-label="Importar lista de livros" title="Importar JSON">Importar</button>
+                        <div class="dropdown" id="export-dropdown">
+                            <button id="btn-exportar" class="secondary" aria-haspopup="true" aria-expanded="false" aria-controls="menu-exportar">Exportar ▾</button>
+                            <div class="menu" id="menu-exportar" role="menu" hidden>
+                                <button data-exp="csv" role="menuitem">CSV (todos)</button>
+                                <button data-exp="json" role="menuitem">JSON (todos)</button>
+                                <button data-exp="csv-filtrados" role="menuitem">CSV (filtrados)</button>
+                                <button data-exp="json-filtrados" role="menuitem">JSON (filtrados)</button>
+                            </div>
+                        </div>
+                    </div>
+                    <select id="ordenacao-select" aria-label="Ordenação">
+                        <option value="titulo-asc">Título A→Z</option>
+                        <option value="titulo-desc">Título Z→A</option>
+                        <option value="ano-asc">Ano ↑</option>
+                        <option value="ano-desc">Ano ↓</option>
+                    </select>
+                    <button id="toggle-view" class="secondary" aria-pressed="false" title="Alternar visualização" aria-label="Alternar visualização">☷</button>
+                    <button id="btn-reload" class="secondary" aria-label="Recarregar lista">Recarregar</button>
+                    <button id="btn-limpar-filtros" class="ghost" aria-label="Limpar filtros ativos">Limpar filtros</button>
+                    <button id="btn-ajuda" class="ghost" title="Ajuda" aria-label="Ajuda">?</button>
+                </div>
             </div>
             <section id="card-list" aria-live="polite" aria-label="Lista de livros" tabindex="0"></section>
             <nav id="paginacao" aria-label="Paginação de livros"></nav>
         </main>
+    </div>
     </div>
 
     <!-- Modal Novo Livro -->
